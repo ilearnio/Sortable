@@ -391,6 +391,7 @@ function Sortable(el, options) {
 		fallbackClass: 'sortable-fallback',
 		fallbackOnBody: false,
 		fallbackTolerance: 0,
+		fallbackBounded: false,
 		fallbackOffset: {x: 0, y: 0},
 		supportPointer: Sortable.supportPointer !== false && ('PointerEvent' in window) && !Safari,
 		emptyInsertThreshold: 5
@@ -582,6 +583,8 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 			this._lastX = (touch || evt).clientX;
 			this._lastY = (touch || evt).clientY;
+      this._startDragElOffsetLeft = dragEl.offsetLeft;
+      this._startDragElOffsetTop = dragEl.offsetTop;
 
 			dragEl.style['will-change'] = 'all';
 
@@ -804,6 +807,18 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 				dy = ((touch.clientY - tapEvt.clientY)
 						+ fallbackOffset.y) / (scaleY || 1)
 						+ (relativeScrollOffset ? (relativeScrollOffset[1] - ghostRelativeParentInitialScroll[1]) : 0) / (scaleY || 1);
+
+			if (options.fallbackBounded) {
+				var rootEl = this.el;
+				var minX = rootEl.offsetLeft - this._startDragElOffsetLeft;
+				var maxX = rootEl.offsetLeft + rootEl.offsetWidth - this._startDragElOffsetLeft - tapEvt.target.offsetWidth;
+				var minY = rootEl.offsetTop - this._startDragElOffsetTop;
+				var maxY = rootEl.offsetTop + rootEl.offsetHeight - this._startDragElOffsetTop - tapEvt.target.offsetHeight;
+				if (dx < minX) dx = minX;
+				else if (dx > maxX) dx = maxX;
+				if (dy < minY) dy = minY;
+				else if (dy > maxY) dy = maxY;
+			}
 
 			// only set the status to dragging, when we are actually dragging
 			if (!Sortable.active && !awaitingDragStarted) {
